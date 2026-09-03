@@ -4,9 +4,10 @@ import db from '../../../db/db.config.js'; // src/api/auth -> db/db.config.js
 
 // Signup Controller
 export const signup = async (req, res) => {
-  const { name, email, password } = req.body;
+  const { name, username, email, password } = req.body;
+  const displayName = name || username;
 
-  if (!name || !email || !password) {
+  if (!displayName || !email || !password) {
     return res.status(400).json({ success: false, error: 'All fields are required' });
   }
 
@@ -21,7 +22,7 @@ export const signup = async (req, res) => {
 
     const [result] = await db.query(
       'INSERT INTO users (name, email, password) VALUES (?, ?, ?)',
-      [name, email, hashedPassword]
+      [displayName, email, hashedPassword]
     );
 
     const userId = result.insertId;
@@ -33,7 +34,7 @@ export const signup = async (req, res) => {
 
     return res.status(201).json({
       success: true,
-      user: { id: userId, name, email },
+      user: { id: userId, name: displayName, email },
       token
     });
   } catch (err) {

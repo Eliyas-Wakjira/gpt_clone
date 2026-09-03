@@ -26,14 +26,16 @@ app.use((err, req, res, next) => {
     });
 });
 
+const PORT = process.env.PORT || 3888;
+
 async function startServer() {
     try {
         const connection = await db.getConnection();
-        console.log('Db connected');
+        console.log('Database connected successfully');
         connection.release();
 
-        app.listen(3888, () => {
-            console.log('Server is running on port http://localhost:3888');
+        app.listen(PORT, () => {
+            console.log(`Server is running on port http://localhost:${PORT}`);
         });
     } catch (error) {
         console.error('Error starting server:', error.message);

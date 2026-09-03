@@ -1,107 +1,77 @@
-import { useState, useEffect } from 'react';
-import { X } from 'lucide-react';
-import axiosInstance from '../../axios';
-import styles from './AuthModal.module.css';
+import { useState } from 'react';
+import axiosInstance from '../../axios'; // Relative path gara src/axios.js sirreeffame
 
-export default function AuthModal({ isOpen, onClose, initialMode = 'login', onAuthSuccess }) {
-  const [isLogin, setIsLogin] = useState(initialMode === 'login');
-  const [formData, setFormData] = useState({ name: '', email: '', password: '' });
+function AuthModal({ isOpen, onClose }) {
+  const [isLogin, setIsLogin] = useState(true);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [username, setUsername] = useState('');
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-
-  // Initial mode yeroo jijjiiramu state sync gochuu
-  useEffect(() => {
-    setIsLogin(initialMode === 'login');
-    setError('');
-  }, [initialMode, isOpen]);
 
   if (!isOpen) return null;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    setLoading(true);
 
-    const endpoint = isLogin ? '/auth/login' : '/auth/signup';
-    
-    // Login yeroo ta'u name dhiisnee payload qheessina
-    const payload = isLogin 
-      ? { email: formData.email, password: formData.password }
-      : formData;
+    const endpoint = isLogin ? '/auth/login' : '/auth/register';
+    const payload = isLogin ? { email, password } : { name: username, email, password };
 
     try {
-      const res = await axiosInstance.post(endpoint, payload);
-      
-      if (res.data && res.data.success) {
-        if (res.data.token) {
-          localStorage.setItem('token', res.data.token);
-        }
-        if (res.data.user) {
-          localStorage.setItem('user', JSON.stringify(res.data.user));
-          if (onAuthSuccess) onAuthSuccess(res.data.user);
-        }
-        onClose(); // Modal cufuu
-      } else {
-        setError(res.data?.error || 'Operation failed');
+      const response = await axiosInstance.post(endpoint, payload);
+
+      if (response.data?.token) {
+        // Token localstorage keessatti save gochuu
+        localStorage.setItem('token', response.data.token);
+        
+        // Page reload gochuun token haaraa apply gochuu
+        window.location.reload();
       }
     } catch (err) {
-      console.error('Auth Request Error:', err.response?.data);
-      const msg = err.response?.data?.error || err.response?.data?.message || err.message;
-      setError(msg || 'Authentication failed. Check your connection or credentials.');
-    } finally {
-      setLoading(false);
+      console.error('Auth Request Error:', err.response?.data || err);
+      setError(err.response?.data?.error || err.response?.data?.message || 'Authentication failed');
     }
   };
 
-  const toggleMode = () => {
-    setIsLogin(!isLogin);
-    setError('');
-  };
-
   return (
-    <div className={styles.overlay}>
-      <div className={styles.modal}>
-        <button className={styles.closeBtn} onClick={onClose}><X size={20} /></button>
-        <h2>{isLogin ? 'Welcome back' : 'Create account'}</h2>
-        
-        {error && <div className={styles.error}>{error}</div>}
+    <div className="modal-overlay">
+      <div className="modal-content">
+        <h2>{isLogin ? 'Login' : 'Register'}</h2>
+        {error && <p className="error-text" style={{ color: 'red' }}>{error}</p>}
         
         <form onSubmit={handleSubmit}>
           {!isLogin && (
-            <input 
-              type="text" 
-              placeholder="Full Name" 
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              required 
+            <input
+              type="text"
+              placeholder="Username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              required
             />
           )}
-          <input 
-            type="email" 
-            placeholder="Email address" 
-            value={formData.email}
-            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-            required 
+          <input
+            type="email"
+            placeholder="Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
           />
-          <input 
-            type="password" 
-            placeholder="Password" 
-            value={formData.password}
-            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-            required 
+          <input
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
           />
-          <button type="submit" className={styles.submitBtn} disabled={loading}>
-            {loading ? 'Processing...' : isLogin ? 'Log In' : 'Sign Up'}
-          </button>
+          <button type="submit">{isLogin ? 'Sign In' : 'Sign Up'}</button>
         </form>
 
-        <p className={styles.toggleText}>
-          {isLogin ? "Don't have an account? " : "Already have an account? "}
-          <span onClick={toggleMode}>
-            {isLogin ? 'Sign up' : 'Log in'}
-          </span>
+        <p onClick={() => setIsLogin(!isLogin)} style={{ cursor: 'pointer', marginTop: '10px' }}>
+          {isLogin ? "Account hin qabduu? Register godhi" : "Account qabdaa? Login godhi"}
         </p>
       </div>
     </div>
   );
 }
+
+export default AuthModal;

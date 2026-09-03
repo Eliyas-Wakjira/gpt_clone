@@ -5,6 +5,6 @@ import authRouter from './auth/auth.route.js';
 const mainRouter = express.Router();
 
 mainRouter.use('/auth', authRouter);
-mainRouter.use('/chat', chatRouter); // /api/chat/conversations ta'a
+mainRouter.use('/chat', chatRouter);
 
 export default mainRouter;
